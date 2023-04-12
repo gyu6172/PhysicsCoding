@@ -28,5 +28,13 @@ while(t < 10):
     rArrow.axis = r(t)
     vArrow.axis = v(t)
     aArrow.axis = a(t)
-
     t += dt
+
+rvAngle = diff_angle(rArrow.pos, vArrow.pos)
+vaAngle = diff_angle(vArrow.pos, aArrow.pos)
+print("r-v 각도 :", degrees(rvAngle))
+print("v-a 각도 :", degrees(vaAngle))
+
+print("r벡터 크기 :", mag(rArrow.axis))
+print("v벡터 크기 :", mag(vArrow.axis))
+print("a벡터 크기 :", mag(aArrow.axis))

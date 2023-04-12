@@ -2,6 +2,7 @@ from vpython import *
 
 ball = sphere(pos=vec(0, 0, 0), radius=0.2, color=color.red)
 ball.v = vec(2, 0, 0)
+ball.a = vec(2, 0, 0)
 
 xaxis = arrow(pos=vec(0, 0, 0), axis=vec(5, 0, 0),
               shaftwidth=0.2, color=color.red)
@@ -20,7 +21,7 @@ t = 1
 dt = 0.001
 while(t < 20):
     rate(1/dt)
-    ball.a = 2*cross(ball.v, e3)
+    ball.a = 2*norm(cross(ball.v, e3))
     ball.v += ball.a*dt
     ball.pos += ball.v*dt
     g_ball.plot(pos=(t, ball.pos.y))
