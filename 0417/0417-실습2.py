@@ -22,8 +22,8 @@ Ffoot = G*planet.m/(planet.radius)**2
 Fhead = G*planet.m/(planet.radius+1)**2
 print('Gravitational acceleration difference :', abs(Fhead-Ffoot), 'm/s^2')
 
-#공전속도 : sqrt(GM/r)
-prince.v = vec(sqrt(G*planet.m/r), 0, 0)
+#공전속도 : sqrt(GM/R)
+prince.v = vec(sqrt(G*planet.m/(r+1)), 0, 0)
 prince.a = vec(0, -Fhead, 0)
 print('Velocity :', mag(prince.v), 'm/s')
 
