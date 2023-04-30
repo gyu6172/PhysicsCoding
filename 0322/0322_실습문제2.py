@@ -17,8 +17,8 @@ b = vec(2, -1, 1)
 c = cross(a, b)
 d = cross(b, a)
 
-a_arrow = arrow(pos=vec(0, 0, 0), axis=a)
-b_arrow = arrow(pos=vec(0, 0, 0), axis=b)
+a_arrow = arrow(pos=vec(0, 0, 0), axis=a, color=color.red)
+b_arrow = arrow(pos=vec(0, 0, 0), axis=b, color=color.blue)
 c_arrow = arrow(pos=vec(0, 0, 0), axis=c, color=color.green)
 d_arrow = arrow(pos=vec(0, 0, 0), axis=d, color=color.purple)
 
