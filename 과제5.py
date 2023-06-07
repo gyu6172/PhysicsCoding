@@ -15,10 +15,11 @@ def on_keydown(event):
     global gamestate
     print('power =', shoot.power)
     print('theta =', shoot.theta)
+    print('axis =', shoot.axis)
     if (event.key == "left"):
-        shoot.theta -= 1
-    elif (event.key == "right"):
         shoot.theta += 1
+    elif (event.key == "right"):
+        shoot.theta -= 1
     elif (event.key == "up" and shoot.power < 0.8):
         shoot.power += 0.01
     elif (event.key == "down" and shoot.power > 0):
@@ -58,16 +59,13 @@ def updatePos(ball, dt):
     ball.f = -uk*ball.m*mag(g)*norm(ball.v)
     ball.v += ball.f/ball.m*dt
     ball.pos += ball.v*dt
-    if(mag(ball.v) < 0.001):
+    if(mag(ball.v) < 0.1):
         ball.v = vec(0, 0, 0)
 
 
-x_axis = arrow(pos=vec(0, 0, 0), axis=vec(
-    5, 0, 0), shaftwidth=0.03, color=color.red)
-y_axis = arrow(pos=vec(0, 0, 0), axis=vec(0, 5, 0),
-               shaftwidth=0.03, color=color.green)
-z_axis = arrow(pos=vec(0, 0, 0), axis=vec(0, 0, 5),
-               shaftwidth=0.03, color=color.blue)
+#x_axis = arrow(pos=vec(0, 0, 0), axis=vec(5, 0, 0), shaftwidth=0.03, color=color.red)
+#y_axis = arrow(pos=vec(0, 0, 0), axis=vec(0, 5, 0),shaftwidth=0.03, color=color.green)
+#z_axis = arrow(pos=vec(0, 0, 0), axis=vec(0, 0, 5), shaftwidth=0.03, color=color.blue)
 
 r = 0.0285
 m = 0.17
@@ -107,13 +105,13 @@ w = 1.27
 h = 2.54
 table = box(pos=vec(0, -r-0.05, 0.5), size=vec(w, 0.1, h), color=color.green)
 
-shoot = arrow(pos=vec(0, 0, 0), color=color.white, shaftwidth=0.005)
-shoot.power = 0.2
-shoot.theta = 90
-shoot.axis = vec(shoot.power*cos(radians(shoot.theta)),
-                 0, shoot.power*sin(shoot.theta))
+shoot = arrow(pos=ball_list[0].pos, color=color.white, shaftwidth=0.005)
+shoot.power = 0.3
+shoot.theta = -180
+shoot.axis = vec(shoot.power*sin(radians(shoot.theta)),
+                 0, shoot.power*cos(radians(shoot.theta)))
 
-uk = 0.002
+uk = 0.1
 g = vec(0, -9.8, 0)
 
 gamestate = {'ready': True, 'shoot': False}
@@ -125,12 +123,12 @@ dt = 0.0001
 while True:
     rate(1/dt)
 
-    if(gamestate["ready"]):
+    if(gamestate['ready']):
         shoot.visible = True
         shoot.axis = vec(shoot.power*sin(radians(shoot.theta)),
-                         0, shoot.power*cos(shoot.theta))
-        ball_list[0].v = 10*vec(shoot.power*cos(radians(shoot.theta)),
-                                0, shoot.power*sin(shoot.theta))
+                         0, shoot.power*cos(radians(shoot.theta)))
+        ball_list[0].v = 10*vec(shoot.power*sin(radians(shoot.theta)),
+                                0, shoot.power*cos(radians(shoot.theta)))
 
     elif(gamestate['shoot']):
         shoot.visible = False
@@ -142,6 +140,6 @@ while True:
                 if(b1 == b2):
                     continue
                 if(isCollision(b1, b2)):
-                    updateCollision(b1, b2, 0.9)
+                    updateCollision(b1, b2, 1)
 
     t += dt
