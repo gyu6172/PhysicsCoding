@@ -41,14 +41,17 @@ white_ball.f = vec(0, 0, 0)
 red_ball.f = vec(0, 0, 0)
 green_ball.f = vec(0, 0, 0)
 
+g = vec(0, 0, -9.8)
+
 white_ball.m = 1
 red_ball.m = 1
 green_ball.m = 1
 
+uk = 0.002
+
 gp = graph(xtitle='t', ytitle='Central Mass')
 central_mass_x = gcurve(graph=gp, color=color.red)
 central_mass_y = gcurve(graph=gp, color=color.blue)
-
 
 t = 0
 dt = 0.001
@@ -61,6 +64,10 @@ while True:
 
     if(isCollision(red_ball, green_ball)):
         updateCollision(red_ball, green_ball, 1)
+
+    white_ball.f = -uk*white_ball.m*mag(g)*norm(white_ball.v)
+    red_ball.f = -uk*red_ball.m*mag(g)*norm(red_ball.v)
+    green_ball.f = -uk*green_ball.m*mag(g)*norm(green_ball.v)
 
     white_ball.v += white_ball.f/white_ball.m*dt
     red_ball.v += red_ball.f/red_ball.m*dt
@@ -75,5 +82,12 @@ while True:
 
     central_mass_x.plot(pos=(t, v_com.x))
     central_mass_y.plot(pos=(t, v_com.y))
+
+    if(mag(white_ball.v) < 0.01):
+        white_ball.v = vec(0, 0, 0)
+    if(mag(red_ball.v) < 0.01):
+        red_ball.v = vec(0, 0, 0)
+    if(mag(green_ball.v) < 0.01):
+        green_ball.v = vec(0, 0, 0)
 
     t += dt
