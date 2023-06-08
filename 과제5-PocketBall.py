@@ -1,4 +1,5 @@
 from vpython import *
+
 import random
 
 
@@ -29,29 +30,52 @@ def on_keydown(event):
         gamestate['shoot'] = True
 
 
-def isCollision(b1, b2):
-    dist = mag(b1.pos - b2.pos)
-    if(dist < b1.radius + b2.radius):
-        return True
-    else:
+def collision(b1, b2, e):
+    n = b1.pos - b2.pos
+    n_hat = norm(n)
+    dist = mag(n)
+    v_relm = dot(b1.v - b2.v, n_hat)
+    if v_relm > 0:
         return False
+    tot_radius = b1.radius + b2.radius
+    if dist > tot_radius:
+        return False
+    else:
+        j = -(1+e)*v_relm
+        j = j/(1/b1.m+1/b2.m)
+        b1.v = b1.v + j*n_hat/b1.m
+        b2.v = b2.v - j*n_hat/b2.m
+        # _Option: Postion correction
+        # scene.waitfor('click')
+        #print(b1.radius + b2.radius - dist)
+        b1.pos = b1.pos + n_hat*(tot_radius - dist)*b2.m/(b1.m + b2.m)
+        b2.pos = b2.pos - n_hat*(tot_radius - dist)*b1.m/(b1.m + b2.m)
+        #print(b1.radius + b2.radius - mag(b1.pos - b2.pos))
+        # scene.waitfor('click')
+        return True
 
 
-def updateCollision(b1, b2, e):
-    r = b2.pos - b1.pos
-    r_hat = norm(r)
-    dist = mag(r)
-
-    v1_c = dot(b1.v, r_hat)*r_hat
-    v2_c = dot(b2.v, r_hat)*r_hat
-    v1_p = b1.v - v1_c
-    v2_p = b2.v - v2_c
-
-    v1 = ((b1.m-e*b2.m)*v1_c + (1+e)*b2.m*v2_c)/(b1.m+b2.m)
-    v2 = ((b2.m-e*b1.m)*v2_c + (1+e)*b1.m*v1_c)/(b1.m+b2.m)
-
-    b1.v = v1 + v1_p
-    b2.v = v2 + v2_p
+def col_pool(ball, ground, e):
+    col_flag = False
+    # x-axis collision check
+    if -ground.size.x/2 > ball.pos.x - ball.radius:
+        ball.pos.x = -ground.size.x/2 + ball.radius
+        ball.v.x = -e*ball.v.x
+        col_flag = True
+    if ground.size.x/2 < ball.pos.x + ball.radius:
+        ball.pos.x = ground.size.x/2 - ball.radius
+        ball.v.x = -e*ball.v.x
+        col_flag = True
+    # y-axis collision check
+    if -ground.size.z/2 > ball.pos.z - ball.radius:
+        ball.pos.z = -ground.size.z/2 + ball.radius
+        ball.v.z = -e*ball.v.z
+        col_flag = True
+    if ground.size.z/2 < ball.pos.z + ball.radius:
+        ball.pos.z = ground.size.z/2 - ball.radius
+        ball.v.z = -e*ball.v.z
+        col_flag = True
+    return col_flag
 
 
 def updatePos(ball, dt):
@@ -59,7 +83,7 @@ def updatePos(ball, dt):
     ball.f = -uk*ball.m*mag(g)*norm(ball.v)
     ball.v += ball.f/ball.m*dt
     ball.pos += ball.v*dt
-    if(mag(ball.v) < 0.1):
+    if(mag(ball.v) < 0.01):
         ball.v = vec(0, 0, 0)
 
 
@@ -93,7 +117,7 @@ initpos_list = []
 
 for i in range(5):
     for j in range(-i, i+1, 2):
-        initpos_list.append(vec(r*j, 0, -sqrt(3)*i*r))
+        initpos_list.append(vec(r*j, 0, -sqrt(3)*i*r*1.5))
 
 initpos = vec(0, 0, 0.8)
 ball_list.append(initBall(initpos, r, m, color.white))
@@ -119,11 +143,12 @@ gamestate = {'ready': True, 'shoot': False}
 scene.bind("keydown", on_keydown)
 
 t = 0
-dt = 0.0001
+dt = 0.001
 while True:
     rate(1/dt)
 
     if(gamestate['ready']):
+        shoot.pos = ball_list[0].pos
         shoot.visible = True
         shoot.axis = vec(shoot.power*sin(radians(shoot.theta)),
                          0, shoot.power*cos(radians(shoot.theta)))
@@ -133,13 +158,22 @@ while True:
     elif(gamestate['shoot']):
         shoot.visible = False
         for ball in ball_list:
+            col_pool(ball, table, 1)
             updatePos(ball, dt)
 
         for b1 in ball_list:
             for b2 in ball_list:
                 if(b1 == b2):
                     continue
-                if(isCollision(b1, b2)):
-                    updateCollision(b1, b2, 1)
+                collision(b1, b2, 1)
+
+        flag = True
+        for ball in ball_list:
+            if(mag(ball.v) > 0.01):
+                flag = False
+
+        if(flag):
+            gamestate['ready'] = True
+            gamestate['shoot'] = False
 
     t += dt
