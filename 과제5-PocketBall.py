@@ -1,7 +1,5 @@
 from vpython import *
 
-import random
-
 
 def initBall(p, r, mass, color):
     ball = sphere(pos=p, radius=r, color=color)
@@ -11,12 +9,14 @@ def initBall(p, r, mass, color):
     return ball
 
 
+def initPlate(pos, size):
+    plate = box(pos=pos, size=size, color=color.green)
+    return plate
+
+
 def on_keydown(event):
     global shoot
     global gamestate
-    print('power =', shoot.power)
-    print('theta =', shoot.theta)
-    print('axis =', shoot.axis)
     if (event.key == "left"):
         shoot.theta += 1
     elif (event.key == "right"):
@@ -30,7 +30,7 @@ def on_keydown(event):
         gamestate['shoot'] = True
 
 
-def collision(b1, b2, e):
+def collision_ball(b1, b2, e):
     n = b1.pos - b2.pos
     n_hat = norm(n)
     dist = mag(n)
@@ -57,31 +57,31 @@ def collision(b1, b2, e):
         return True
 
 
-def col_pool(ball, ground, e):
-    col_flag = False
-    # x-axis collision check
-    if -ground.size.x/2 > ball.pos.x - ball.radius:
-        ball.pos.x = -ground.size.x/2 + ball.radius
+def collision_plate(ball, table, e):
+    if -table.size.x/2 > ball.pos.x - ball.radius:
+        ball.pos.x = -table.size.x/2 + ball.radius
         ball.v.x = -e*ball.v.x
-        ball.v *= 0.9
-        col_flag = True
-    if ground.size.x/2 < ball.pos.x + ball.radius:
-        ball.pos.x = ground.size.x/2 - ball.radius
+
+    if table.size.x/2 < ball.pos.x + ball.radius:
+        ball.pos.x = table.size.x/2 - ball.radius
         ball.v.x = -e*ball.v.x
-        ball.v *= 0.9
-        col_flag = True
-    # y-axis collision check
-    if -ground.size.z/2 > ball.pos.z - ball.radius:
-        ball.pos.z = -ground.size.z/2 + ball.radius
+
+    if -table.size.z/2 > ball.pos.z - ball.radius:
+        ball.pos.z = -table.size.z/2 + ball.radius
         ball.v.z = -e*ball.v.z
-        ball.v *= 0.9
-        col_flag = True
-    if ground.size.z/2 < ball.pos.z + ball.radius:
-        ball.pos.z = ground.size.z/2 - ball.radius
+
+    if table.size.z/2 < ball.pos.z + ball.radius:
+        ball.pos.z = table.size.z/2 - ball.radius
         ball.v.z = -e*ball.v.z
-        ball.v *= 0.9
-        col_flag = True
-    return col_flag
+
+
+def collisionHole(ball, hole):
+    global hole_r
+
+    if(mag(ball.pos - hole) < hole_r):
+        return True
+    else:
+        return False
 
 
 def updatePos(ball, dt):
@@ -138,19 +138,27 @@ w = 1.27
 h = 2.54
 table = box(pos=vec(0, -r-0.05, 0), size=vec(w, 0.1, h), color=color.green)
 
-hole_r = 0.05
+plate_list = []
+
+hole_r = 0.07
 pw = w-2*hole_r
 ph = 0.1
 pt = 0.001
 
-plate1 = box(pos=vec(0, 0, -h/2), size=vec(pw, ph, pt), color=color.green)
-plate2 = box(pos=vec(0, 0, h/2), size=vec(pw, ph, pt), color=color.green)
+plate_list.append(initPlate(vec(0, 0, -h/2), vec(pw, ph, pt)))
+plate_list.append(initPlate(vec(0, 0, h/2), vec(pw, ph, pt)))
+plate_list.append(initPlate(vec(w/2, 0, h/4), vec(pt, ph, pw)))
+plate_list.append(initPlate(vec(w/2, 0, -h/4), vec(pt, ph, pw)))
+plate_list.append(initPlate(vec(-w/2, 0, h/4), vec(pt, ph, pw)))
+plate_list.append(initPlate(vec(-w/2, 0, -h/4), vec(pt, ph, pw)))
 
-plate3 = box(pos=vec(w/2, 0, h/4), size=vec(pt, ph, pw), color=color.green)
-plate4 = box(pos=vec(w/2, 0, -h/4), size=vec(pt, ph, pw), color=color.green)
-plate5 = box(pos=vec(-w/2, 0, h/4), size=vec(pt, ph, pw), color=color.green)
-plate6 = box(pos=vec(-w/2, 0, -h/4), size=vec(pt, ph, pw), color=color.green)
-
+hole_list = []
+hole_list.append(vec(w/2, 0, h/2))
+hole_list.append(vec(w/2, 0, 0))
+hole_list.append(vec(w/2, 0, -h/2))
+hole_list.append(vec(-w/2, 0, h/2))
+hole_list.append(vec(-w/2, 0, 0))
+hole_list.append(vec(-w/2, 0, -h/2))
 
 shoot = arrow(pos=ball_list[0].pos, color=color.white, shaftwidth=0.005)
 shoot.power = 0.3
@@ -161,7 +169,8 @@ shoot.axis = vec(shoot.power*sin(radians(shoot.theta)),
 uk = 0.02
 g = vec(0, -9.8, 0)
 
-gamestate = {'ready': True, 'shoot': False, 'gameover': False}
+gamestate = {'ready': True, 'shoot': False,
+             'gameover': False, 'gamelose': False, 'gamewin': False}
 
 scene.bind("keydown", on_keydown)
 
@@ -169,6 +178,10 @@ t = 0
 dt = 0.001
 while not gamestate['gameover']:
     rate(1/dt)
+
+    # for ar in arrow_list:
+    #     for plate in plate_list:
+    #         ar.axis = ball_list[0].pos-plate.pos
 
     if(gamestate['ready']):
         scene.center = ball_list[0].pos
@@ -181,15 +194,34 @@ while not gamestate['gameover']:
 
     elif(gamestate['shoot']):
         shoot.visible = False
+
+        if (len(ball_list) == 1):
+            gamestate['gamewin'] = True
+            gamestate['gameover'] = True
+
         for ball in ball_list:
-            col_pool(ball, table, 1)
             updatePos(ball, dt)
 
         for b1 in ball_list:
             for b2 in ball_list:
                 if(b1 == b2):
                     continue
-                collision(b1, b2, 1)
+                collision_ball(b1, b2, 1)
+
+        for ball in ball_list:
+            collision_plate(ball, table, 0.9)
+
+        for ball in ball_list:
+            for hole in hole_list:
+                if(collisionHole(ball, hole)):
+                    if(ball == ball_list[0]):
+                        gamestate['gameover'] = True
+                        gamestate['gamelose'] = True
+                        ball.visible = False
+
+                    else:
+                        ball.visible = False
+                        ball_list.remove(ball)
 
         flag = True
         for ball in ball_list:
@@ -201,3 +233,9 @@ while not gamestate['gameover']:
             gamestate['shoot'] = False
 
     t += dt
+
+gameover_text = label(pos=ball_list[0].pos, height=30)
+if(gamestate['gamelose']):
+    gameover_text.text = "Game Over!"
+elif(gamestate['gamewin']):
+    gameover_text.text = "You Win!"
