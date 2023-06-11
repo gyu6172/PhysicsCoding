@@ -235,7 +235,14 @@ while not gamestate['gameover']:
                         gamestate['gamelose'] = True
                         ball.visible = False
 
-                    #흰공이 아니라면
+                    #만약 들어간 공이 검은공이라면
+                    elif (ball.color == color.black):
+                        #게임 패배, 종료
+                        gamestate['gameover'] = True
+                        gamestate['gamelose'] = True
+                        ball.visible = False
+
+                    #그 외의 경우라면
                     else:
                         #공을 숨기고 리스트에서 삭제
                         ball.visible = False
