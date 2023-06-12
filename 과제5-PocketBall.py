@@ -9,9 +9,9 @@ def initBall(p, r, mass, color):
     return ball
 
 # 벽 객체 생성 함수
-def initPlate(pos, size):
-    plate = box(pos=pos, size=size, color=color.green)
-    return plate
+def initWall(pos, size):
+    wall = box(pos=pos, size=size, color=color.green)
+    return wall
 
 # 키보드이벤트 함수
 def on_keydown(event):
@@ -33,11 +33,11 @@ def on_keydown(event):
         gamestate['shoot'] = True
 
 # 공끼리의 충돌 감지 함수
-def collision_ball(b1, b2, e):
-    n = b1.pos - b2.pos
-    n_hat = norm(n)
-    dist = mag(n)
-    v_relm = dot(b1.v - b2.v, n_hat)
+def collisionBall(b1, b2, e):
+    r = b1.pos - b2.pos
+    r_hat = norm(r)
+    dist = mag(r)
+    v_relm = dot(b1.v - b2.v, r_hat)
     tot_radius = b1.radius + b2.radius
     if v_relm > 0:
         return False
@@ -46,15 +46,15 @@ def collision_ball(b1, b2, e):
     if (dist <= tot_radius):
         j = -(1+e)*v_relm
         j = j/(1/b1.m+1/b2.m)
-        b1.v = b1.v + j*n_hat/b1.m
-        b2.v = b2.v - j*n_hat/b2.m
+        b1.v = b1.v + j*r_hat/b1.m
+        b2.v = b2.v - j*r_hat/b2.m
         b1.v *= 0.8
         b2.v *= 0.8
 
         return True
 
 #공이 벽을 맞고 튕기게 하는 함수
-def collision_plate(ball, table, e):
+def collisionWall(ball, table, e):
     if -table.size.x/2 > ball.pos.x - ball.radius:
         ball.pos.x = -table.size.x/2 + ball.radius
         ball.v.x = -e*ball.v.x
@@ -135,7 +135,7 @@ h = 2.54
 table = box(pos=vec(0, -r-0.05, 0), size=vec(w, 0.1, h), color=color.green)
 
 #벽 객체 리스트
-plate_list = []
+wall_list = []
 
 #구멍의 반지름
 hole_r = 0.07
@@ -146,12 +146,12 @@ ph = 0.1
 pt = 0.001
 
 #벽 객체 리스트에 벽들을 하나씩 추가
-plate_list.append(initPlate(vec(0, 0, -h/2), vec(pw, ph, pt)))
-plate_list.append(initPlate(vec(0, 0, h/2), vec(pw, ph, pt)))
-plate_list.append(initPlate(vec(w/2, 0, h/4), vec(pt, ph, pw)))
-plate_list.append(initPlate(vec(w/2, 0, -h/4), vec(pt, ph, pw)))
-plate_list.append(initPlate(vec(-w/2, 0, h/4), vec(pt, ph, pw)))
-plate_list.append(initPlate(vec(-w/2, 0, -h/4), vec(pt, ph, pw)))
+wall_list.append(initWall(vec(0, 0, -h/2), vec(pw, ph, pt)))
+wall_list.append(initWall(vec(0, 0, h/2), vec(pw, ph, pt)))
+wall_list.append(initWall(vec(w/2, 0, h/4), vec(pt, ph, pw)))
+wall_list.append(initWall(vec(w/2, 0, -h/4), vec(pt, ph, pw)))
+wall_list.append(initWall(vec(-w/2, 0, h/4), vec(pt, ph, pw)))
+wall_list.append(initWall(vec(-w/2, 0, -h/4), vec(pt, ph, pw)))
 
 #구멍의 위치 벡터를 담은 리스트
 hole_list = []
@@ -218,11 +218,11 @@ while not gamestate['gameover']:
             for b2 in ball_list:
                 if(b1 == b2):
                     continue
-                collision_ball(b1, b2, 1)
+                collisionBall(b1, b2, 1)
 
         #공이 벽에 맞는지 검사
         for ball in ball_list:
-            collision_plate(ball, table, 0.9)
+            collisionWall(ball, table, 0.9)
 
         #공이 구멍에 들어갔는지 검사
         for ball in ball_list:
