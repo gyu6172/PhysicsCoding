@@ -235,8 +235,8 @@ while not gamestate['gameover']:
                         gamestate['gamelose'] = True
                         ball.visible = False
 
-                    #만약 들어간 공이 검은공이라면
-                    elif (ball.color == color.black):
+                    #만약 들어간 공이 검은 공이고 마지막에 넣은 것이 아니라면
+                    elif (ball.color == color.black and len(ball_list)>2):
                         #게임 패배, 종료
                         gamestate['gameover'] = True
                         gamestate['gamelose'] = True
